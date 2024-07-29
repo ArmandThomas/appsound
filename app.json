@@ -1,7 +1,8 @@
 {
   "expo": {
+    "scheme": "appsoundnewarchi",
     "name": "appsoundnewarchi",
-    "slug": "appsoundnewarchi",
+    "slug": "sounapp",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.example.with-new-arch"
@@ -10,7 +11,8 @@
       "package": "com.example.withnewarch"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       [
@@ -23,7 +25,17 @@
             "newArchEnabled": true
           }
         }
-      ]
-    ]
+      ],
+      "expo-router"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "da368183-0f3e-48c0-9608-92b50c0025b8"
+      }
+    },
+    "owner": "armandthomas"
   }
 }
