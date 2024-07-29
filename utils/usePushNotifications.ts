@@ -34,7 +34,8 @@ export const usePushNotifications = (): PushNotificationState => {
     async function registerForPushNotificationsAsync() {
         let token;
         //@ts-ignore
-        if (Device.isDevice) {
+        if (Device.isDevice && Device.deviceType) {
+            if (Platform.OS === "web") return;
             const { status: existingStatus } =
                 await Notifications.getPermissionsAsync();
             let finalStatus = existingStatus;
