@@ -3,6 +3,7 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 
 import Constants from "expo-constants";
+import {useUserStore} from "../stores/useUserStore";
 
 import { Platform } from "react-native";
 
@@ -12,6 +13,9 @@ export interface PushNotificationState {
 }
 
 export const usePushNotifications = (): PushNotificationState => {
+
+    const jwt = useUserStore((state) => state.jwt);
+
     Notifications.setNotificationHandler({
         handleNotification: async () => ({
             shouldPlaySound: false,
@@ -64,6 +68,18 @@ export const usePushNotifications = (): PushNotificationState => {
                 lightColor: "#FF231F7C",
             });
         }
+
+        await fetch(process.env.EXPO_PUBLIC_API_URL + "/save_notification_token", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${jwt}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                token,
+            }),
+
+        });
 
         return token;
     }
