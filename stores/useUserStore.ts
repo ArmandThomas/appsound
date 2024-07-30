@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const useUserStore = create(persist(
-    (set, get) => ({
+    (set) => ({
         jwt: null,
     }),
     {

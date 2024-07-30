@@ -4,11 +4,21 @@ import {usePushNotifications} from "../../utils/usePushNotifications";
 import { ListItem,Avatar} from '@rneui/themed';
 import {useUserStore} from "../../stores/useUserStore";
 
+import PlayIcon from "../../assets/bouton-jouer.png";
+import AlarmIcon from "../../assets/sirene.png";
+import GlassIcon from "../../assets/window.png";
+import PauseIcon from "../../assets/pause.png";
+
+import { Audio } from 'expo-av';
+
 export default function Index() {
 
     const [homes, setHomes] = useState([]);
     const [idHome, setIdHome] = useState(null);
     const [dataHome, setDataHome] = useState(null);
+    const [sound, setSound] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [playingId, setPlayingId] = useState(null);
 
     const { expoPushToken, notification } = usePushNotifications();
 
@@ -54,7 +64,41 @@ export default function Index() {
             });
     }
 
-    const {predictions} = dataHome || [];
+    const callBackStatusAudio = (status) => {
+        if (status.didJustFinish) {
+            setIsPlaying(false);
+            setPlayingId(null);
+            setSound(null);
+        }
+    }
+
+    const playSound = async (idPrediction) => {
+        const URL = process.env.EXPO_PUBLIC_API_URL + `/prediction/getaudio/${idPrediction}`;
+        const sound = new Audio.Sound();
+        setSound(sound);
+        setIsPlaying(true);
+        setPlayingId(idPrediction);
+        await sound.setOnPlaybackStatusUpdate(callBackStatusAudio);
+        await sound.loadAsync({ uri: URL });
+        await sound.playAsync();
+    }
+
+    useEffect(() => {
+        return sound
+            ? () => {
+                sound.unloadAsync();
+            }
+            : undefined;
+    }, [sound]);
+
+    const getHoursAndMinutes = (date) => {
+        const dateObj = new Date(date);
+        return `${dateObj.getHours()}:${dateObj.getMinutes()}`;
+    }
+
+
+    const predictions = dataHome?.predictions || [];
+
 
     return (
         <View style={styles.container}>
@@ -70,16 +114,19 @@ export default function Index() {
                             >
                                 <Avatar
                                     rounded
-                                    source={{
-                                        uri: 'https://1000logos.net/wp-content/uploads/2020/08/SoundCloud-Logo.jpg',
-                                    }}
+                                    source={prediction.prediction === "glass" ? GlassIcon : AlarmIcon}
                                 />
                                 <ListItem.Content>
-                                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems : "center", width: "100%"}}>
-                                        <Avatar rounded    source={{
-                                            uri: 'https://1000logos.net/wp-content/uploads/2020/08/SoundCloud-Logo.jpg',
-                                        }} />
-                                        <Text>21:42</Text>
+                                    <View style={styles.containerListItem}>
+                                        <Text>{getHoursAndMinutes(prediction?.date) || "21:47"}</Text>
+                                        <Avatar rounded
+                                            source={
+                                                isPlaying && playingId === prediction._id
+                                                    ? PauseIcon
+                                                    : PlayIcon
+                                            }
+                                            onPress={() => playSound(prediction._id)}
+                                        />
                                     </View>
                                 </ListItem.Content>
                             </ListItem>
@@ -107,6 +154,12 @@ const styles =  StyleSheet.create({
         flex: 1,
         justifyContent: 'flex-end',
         alignItems: 'center',
+    },
+    containerListItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: "100%",
     }
 
 })
