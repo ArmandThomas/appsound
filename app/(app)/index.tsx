@@ -103,6 +103,7 @@ export default function Index() {
     return (
         <View style={styles.container}>
             <View style={styles.containerHomes}>
+                {expoPushToken && <Text>Expo Push Token: {expoPushToken.data}</Text>}
             </View>
             <View style={styles.containerTimeLine}>
                 {
