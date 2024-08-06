@@ -1,28 +1,87 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {FlatList, StyleSheet, Text, View} from 'react-native';
 import {useEffect, useState} from "react";
 import {usePushNotifications} from "../../utils/usePushNotifications";
-import { ListItem,Avatar} from '@rneui/themed';
+import {Button} from '@rneui/themed';
 import {useUserStore} from "../../stores/useUserStore";
 
-import PlayIcon from "../../assets/bouton-jouer.png";
+import {useNavigation} from "expo-router";
+import { Image } from '@rneui/themed';
+
 import AlarmIcon from "../../assets/sirene.png";
 import GlassIcon from "../../assets/window.png";
-import PauseIcon from "../../assets/pause.png";
 
-import { Audio } from 'expo-av';
+import {useCurrentHome} from "../../stores/UseCurrentHome";
+import {fetchApi} from "../../utils/fetchApi";
+
+interface Prediction {
+    _id: string;
+    date: string;
+    prediction: "background" | "alarm" | "glass";
+    device: string;
+}
+
+const TimelineItem = ({ item }) => {
+
+
+    const getDate = (date) => {
+        const dateObj = new Date(date);
+        return dateObj.toLocaleDateString();
+    }
+
+    const getDateAndHoursAndMinutes = (date) => {
+        const dateObj = new Date(date);
+        return dateObj.toLocaleString();
+    }
+    console.log(item)
+    return (
+        <View
+            style={styles.containerTimelineItem}
+        >
+            <Image
+                source={item.prediction === "alarm" ? AlarmIcon : GlassIcon}
+                style={{width: 50, height: 50}}
+            />
+
+            <Text>{getDateAndHoursAndMinutes(item.date)}</Text>
+
+        </View>
+    );
+
+}
 
 export default function Index() {
 
-    const [homes, setHomes] = useState([]);
-    const [idHome, setIdHome] = useState(null);
-    const [dataHome, setDataHome] = useState(null);
-    const [sound, setSound] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [playingId, setPlayingId] = useState(null);
+    const navigation = useNavigation();
+    const { expoPushToken } = usePushNotifications();
 
-    const { expoPushToken, notification } = usePushNotifications();
+    const [predictions, setPredictions] = useState([]);
 
-    const jwt = useUserStore((state) => state.jwt);
+    const {
+        setCurrentHome,
+        getDataCurrentHome,
+        setName,
+        name,
+        devices
+    } = useCurrentHome();
+
+    const {
+        jwt,
+        pushToken
+    } = useUserStore((state) => state);
+
+    useEffect(() => {
+        if (!expoPushToken) return;
+        if (pushToken === expoPushToken) return;
+        storeExpoToken(expoPushToken).catch((e) => {
+            alert(e);
+        })
+    }, [expoPushToken]);
+
+    const storeExpoToken = async (token) => {
+        await fetchApi("/user/save_notification_token", "post", {
+            token : token.data
+        }, jwt, navigation);
+    }
 
     useEffect(() => {
         try {
@@ -34,106 +93,93 @@ export default function Index() {
 
     }, []);
 
-    useEffect(() => {
-        if (idHome) {
-            fetch(process.env.EXPO_PUBLIC_API_URL + `/home/${idHome}`, {
-                headers: {
-                    Authorization: `Bearer ${jwt}`,
-                },
-            })
-                .then((res) => res.json())
-                .then((res) => {
-                    console.log(res)
-                    setDataHome(res);
-                });
-        }
-    }, [idHome]);
-
-    const getUserHomes = () => {
-        fetch(process.env.EXPO_PUBLIC_API_URL + "/home", {
-            headers: {
-                Authorization: `Bearer ${jwt}`,
-            },
-        })
-            .then((res) => res.json())
-            .then((res) => {
-                setHomes(res);
-                if (res.length > 0) {
-                    setIdHome(res[0]._id);
-                }
-            });
+    const getHomeData = async (home) => {
+        const id = home._id;
+        const data = await fetchApi(`/home/${id}`, "get", {}, jwt, navigation);
+        setCurrentHome(data.home);
+        setPredictions(data.predictions);
     }
 
-    const callBackStatusAudio = (status) => {
-        if (status.didJustFinish) {
-            setIsPlaying(false);
-            setPlayingId(null);
-            setSound(null);
+    const getUserHomes = async () => {
+        const data = await fetchApi("/home", "get", {}, jwt, navigation);
+        if (data.length > 0) {
+            getHomeData(data[0])
         }
     }
 
-    const playSound = async (idPrediction) => {
-        const URL = process.env.EXPO_PUBLIC_API_URL + `/prediction/getaudio/${idPrediction}`;
-        const sound = new Audio.Sound();
-        setSound(sound);
-        setIsPlaying(true);
-        setPlayingId(idPrediction);
-        await sound.setOnPlaybackStatusUpdate(callBackStatusAudio);
-        await sound.loadAsync({ uri: URL });
-        await sound.playAsync();
-    }
-
-    useEffect(() => {
-        return sound
-            ? () => {
-                sound.unloadAsync();
-            }
-            : undefined;
-    }, [sound]);
-
-    const getHoursAndMinutes = (date) => {
-        const dateObj = new Date(date);
-        return `${dateObj.getHours()}:${dateObj.getMinutes()}`;
+    const goToCreateHome = () => {
+        navigation.navigate("createhomename");
     }
 
 
-    const predictions = dataHome?.predictions || [];
+    if (!name) {
+        return (
+            <View style={styles.container}>
+                <Text>No homes available</Text>
+                <View
+                    style={styles.containerButton}
+                >
+                    <Button
+                        onPress={goToCreateHome}
+                    >Créer une maison</Button>
+                </View>
+            </View>
+        );
+    }
 
+    if (devices.length === 0) {
+        return (
+            <View style={styles.container}>
+                <Text>No devices available</Text>
+                <View
+                    style={styles.containerButton}
+                >
+                    <Button
+                        onPress={() => navigation.navigate("createhomedevice")}
+                    >Ajouter un device</Button>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-            <View style={styles.containerHomes}>
-                {expoPushToken && <Text>Expo Push Token: {expoPushToken.data}</Text>}
+            <View
+            >
+                <Text>Home: {name}</Text>
             </View>
-            <View style={styles.containerTimeLine}>
-                {
-                    predictions && predictions.map(prediction => {
-                        return (
-                            <ListItem
-                                key={prediction._id}
-                                bottomDivider
-                            >
-                                <Avatar
-                                    rounded
-                                    source={prediction.prediction === "glass" ? GlassIcon : AlarmIcon}
-                                />
-                                <ListItem.Content>
-                                    <View style={styles.containerListItem}>
-                                        <Text>{getHoursAndMinutes(prediction?.date) || "21:47"}</Text>
-                                        <Avatar rounded
-                                            source={
-                                                isPlaying && playingId === prediction._id
-                                                    ? PauseIcon
-                                                    : PlayIcon
-                                            }
-                                            onPress={() => playSound(prediction._id)}
-                                        />
-                                    </View>
-                                </ListItem.Content>
-                            </ListItem>
-                        )
-                    })
-                }
+            <View
+                style={styles.containerTimeline}
+            >
+
+                <FlatList data={predictions} renderItem={TimelineItem}/>
+
+            </View>
+            <View
+                style={styles.containerAction}
+            >
+                <Button
+                    title="Add a user"
+                    buttonStyle={{
+                        backgroundColor: "#ff551a",
+                        borderRadius: 5,
+                    }}
+                    containerStyle={{
+                        width: 200
+                    }}
+                    titleStyle={{ color: 'white' }}
+                />
+                <Button
+                    title="Add a device"
+                    buttonStyle={{
+                        backgroundColor: "#0069d2",
+                        borderRadius: 5,
+                    }}
+                    containerStyle={{
+                        width: 320
+                    }}
+                    titleStyle={{ color: 'white' }}
+                />
             </View>
         </View>
     );
@@ -143,24 +189,36 @@ const styles =  StyleSheet.create({
 
     container: {
         flex: 1,
+        flexDirection: 'column',
+        marginHorizontal: 20,
+        marginVertical: 80,
+    },
+    containerButton: {
         justifyContent: 'center',
         alignItems: 'center',
+        marginTop: 20
     },
-    containerTimeLine: {
-        width: '95%',
-        borderRadius: 10,
-        flex: 7,
-    },
-    containerHomes : {
+    containerTimeline: {
         flex: 1,
-        justifyContent: 'flex-end',
-        alignItems: 'center',
+        flexDirection: 'row',
+        marginTop: 20,
+        borderRadius: 5,
     },
-    containerListItem: {
+    containerTimelineItem: {
+        flex: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        width: "100%",
+        borderColor: 'black',
+        borderWidth: 1,
+        borderRadius: 10,
+        height: 60,
+        padding: 10,
+        marginTop: 10
+    },
+    containerAction: {
+        position: 'absolute',
+        bottom: 0,
+        justifyContent: 'center',
     }
-
 })

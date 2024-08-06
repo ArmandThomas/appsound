@@ -8,7 +8,8 @@
       "bundleIdentifier": "com.example.with-new-arch"
     },
     "android": {
-      "package": "com.example.withnewarch"
+      "package": "com.appsound.newarchi",
+      "googleServicesFile": "./android/app/google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -26,7 +27,8 @@
           }
         }
       ],
-      "expo-router"
+      "expo-router",
+      "react-native-ble-plx"
     ],
     "extra": {
       "router": {

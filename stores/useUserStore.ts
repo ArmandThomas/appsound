@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const useUserStore = create(persist(
     (set) => ({
         jwt: null,
+        pushToken: null,
     }),
     {
         name: "user-store2", // Nom unique pour le magasin

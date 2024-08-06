@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "867782244153",
+    "project_id": "soundappnewarchi",
+    "storage_bucket": "soundappnewarchi.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:867782244153:android:b408aa16d5545c51a95ae8",
+        "android_client_info": {
+          "package_name": "com.appsound.newarchi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXTHg8_ZQN6oXho2fmbbe8ffTWqRPHggM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

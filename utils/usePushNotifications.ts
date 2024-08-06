@@ -56,6 +56,8 @@ export const usePushNotifications = (): PushNotificationState => {
             token = await Notifications.getExpoPushTokenAsync({
                 projectId: Constants.expoConfig?.extra?.eas.projectId,
             });
+
+
         } else {
             alert("Must be using a physical device for Push notifications");
         }
@@ -68,18 +70,6 @@ export const usePushNotifications = (): PushNotificationState => {
                 lightColor: "#FF231F7C",
             });
         }
-
-        await fetch(process.env.EXPO_PUBLIC_API_URL + "/save_notification_token", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${jwt}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                token,
-            }),
-
-        });
 
         return token;
     }
