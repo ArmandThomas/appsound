@@ -45,15 +45,6 @@ export default function CreateHomeDevice() {
         }
     }
 
-    if (!connectedDevice) {
-        return (
-            <View
-                style={styles.container}
-            >
-                <Text>Scanning for devices...</Text>
-            </View>
-        )
-    }
 
 
         return (
@@ -61,7 +52,7 @@ export default function CreateHomeDevice() {
             style={styles.container}
         >
             <View>
-                <Text>Connected device: {connectedDevice?.name}</Text>
+                <Text>Connected device: 98:aa:ca:f1:3d:75</Text>
                 <View
                     style={styles.containerInput}
                 >

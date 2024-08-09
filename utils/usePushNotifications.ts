@@ -76,16 +76,19 @@ export const usePushNotifications = (): PushNotificationState => {
 
     useEffect(() => {
         registerForPushNotificationsAsync().then((token) => {
+            console.log(token)
             setExpoPushToken(token);
         });
 
         notificationListener.current =
             Notifications.addNotificationReceivedListener((notification) => {
+                console.log(notification);
                 setNotification(notification);
             });
 
         responseListener.current =
             Notifications.addNotificationResponseReceivedListener((response) => {
+                console.log(response);
                 console.log(response);
             });
 
